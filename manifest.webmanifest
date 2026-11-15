@@ -1,0 +1,16 @@
+{
+  "name": "Миллион шаров • Уральск",
+  "short_name": "Миллион шаров",
+  "description": "Студия декора и аэродизайна: шары, арки, фотозоны — г. Уральск",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff5f8",
+  "theme_color": "#e8408a",
+  "lang": "ru",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ],
+  "version": "millionsharov_uralsk_v1.0.0"
+}
