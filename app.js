@@ -1,7 +1,8 @@
-/* Миллион шаров • Уральск — витрина-конструктор v1.2.1.
+/* Миллион шаров • Уральск — витрина-конструктор v1.2.2.
    Всё содержимое приходит из Google Таблицы через шлюз; в памяти телефона хранятся избранное, корзина, черновик заказа, тема и кэш каталога. */
 (function () {
   'use strict';
+  var VER = 'v1.2.2';
   var CFG = { gateway: '', booking: 'https://zko-onlayn-zapis.github.io/zapisi/', wa: '77774784418', site: '', apk: '' };
   var PROJECTS = [
     { icon: '📖', title: 'Картотека ЗКО', text: 'Главный справочник области', url: 'https://zko-spravochnik.github.io/cartoteka/' },
@@ -35,7 +36,7 @@
     need_address: 'Для доставки укажите адрес.', bad_date: 'Дата указана неверно.', bad_item: 'Одной из позиций уже нет в продаже. Обновите страницу и соберите корзину заново.',
     empty_cart: 'Корзина пуста.', bad_text: 'Напишите текст отзыва (не короче 3 знаков).', bad_rating: 'Поставьте оценку от 1 до 5 звёзд.',
     bad_photo: 'Фото не подошло (нужен JPEG, PNG или WebP).', photo_big: 'Фото слишком большое, выберите другое.', no_photo: 'Фото не найдено.', photo_unavailable: 'Фото сейчас недоступно.',
-    bad_gift_name: 'Укажите имя получателя подарка.', bad_gift_phone: 'Телефон получателя указан неверно.'
+    bad_master: 'Неверный пароль.', bad_gift_name: 'Укажите имя получателя подарка.', bad_gift_phone: 'Телефон получателя указан неверно.'
   };
   function errText(e) { return ERR[e && e.code] || 'Что-то пошло не так. Попробуйте ещё раз или напишите в WhatsApp.'; }
   function api(action, data, keep) {
@@ -280,11 +281,11 @@
     return h;
   }
   /* ----- вкладка «Ещё» ----- */
-  var MORE = [['gallery', '📸', 'Наши оформления', 'Расчёт по фото'], ['delivery', '🚚', 'Доставка и оплата', ''], ['reviews', '💬', 'Отзывы покупателей', ''], ['faq', '❓', 'Частые вопросы', 'FAQ'], ['care', '💡', 'Памятка по уходу за шарами', ''], ['projects', '🌐', 'Другие проекты ГИНЦ ЗКО', ''], ['install', '📲', 'Установить приложение', '']];
+  var MORE = [['gallery', '📸', 'Наши оформления', 'Расчёт по фото'], ['delivery', '🚚', 'Доставка и оплата', ''], ['reviews', '💬', 'Отзывы покупателей', ''], ['faq', '❓', 'Частые вопросы', 'FAQ'], ['care', '💡', 'Памятка по уходу за шарами', ''], ['projects', '🌐', 'Другие проекты ГИНЦ ЗКО', ''], ['install', '📲', 'Установить приложение', ''], ['stats', '📊', 'Статистика магазина', 'по паролю'], ['whatsnew', '✨', 'Что нового (' + VER + ')', '']];
   function backBtn() { return '<button class="btn back" data-act="more">← Назад в «Ещё»</button>'; }
   function viewMore() {
     var bu = bookUrl();
-    return '<h2>☰ Ещё</h2><div class="more">' + MORE.map(function (m) { return '<button class="mi" data-act="sub" data-id="' + m[0] + '"><b>' + m[1] + '</b><span>' + m[2] + (m[3] ? '<small>' + m[3] + '</small>' : '') + '</span><i>›</i></button>'; }).join('') +
+    return '<h2>☰ Ещё</h2><div class="verbar">Версия приложения: <b>' + VER + '</b></div><div class="more"><button class="mi" data-act="refreshapp"><b>🔄</b><span>Обновить приложение и каталог<small>свежие файлы и данные</small></span><i>›</i></button>' + MORE.map(function (m) { return '<button class="mi" data-act="sub" data-id="' + m[0] + '"><b>' + m[1] + '</b><span>' + m[2] + (m[3] ? '<small>' + m[3] + '</small>' : '') + '</span><i>›</i></button>'; }).join('') +
       (bu ? '<a class="mi" href="' + esc(bu) + '" target="_blank" rel="noopener"><b>📅</b><span>Забронировать дату в Онлайн-записях<small>профиль в «ЗКО Онлайн-записи» · VIP Premium</small></span><i>↗</i></a>' : '') +
       (setting('instagram') ? '<a class="mi" href="' + esc(setting('instagram')) + '" target="_blank" rel="noopener"><b>📷</b><span>Мы в Instagram</span><i>↗</i></a>' : '') + '</div>';
   }
@@ -322,9 +323,52 @@
       case 'care': return backBtn() + '<h2>💡 Памятка по уходу за шарами</h2><div class="box pre tail">' + esc(setting('care')) + '</div>';
       case 'projects': return backBtn() + '<h2>🌐 Другие проекты ГИНЦ ЗКО</h2>' + PROJECTS.map(function (p) { return '<a class="box proj" href="' + esc(p.url) + '" target="_blank" rel="noopener"><b>' + p.icon + '</b><span><strong>' + esc(p.title) + '</strong><br>' + esc(p.text) + '</span><i>↗</i></a>'; }).join('');
       case 'install': return viewInstall();
+      case 'stats': return backBtn() + viewStats();
+      case 'whatsnew': return backBtn() + whatsNewHTML();
       case 'reviews': return backBtn() + viewReviews();
     }
     return viewMore();
+  }
+  var NEWS = ['🎈 Высокие фото-плитки категорий и подкатегорий — каталог стал нагляднее.',
+    '🎞 Режим «по одному набору на весь экран»: листайте вверх-вниз, ракурсы — влево-вправо.',
+    '🔍 Фото увеличивается щипком до 300%, можно двигать пальцем и дважды касаться.',
+    '🔎 Умный поиск: по названию, составу, категории и сумме (введите «5000»).',
+    '🏆 ТОП-5 популярных наборов и быстрые фильтры по бюджету.',
+    '🎁 Режим «Это подарок», добавки к заказу и быстрый прайс штучных шаров.',
+    '▲ Шапку можно свернуть, чтобы увидеть больше товаров.',
+    '🔄 Кнопка «Обновить приложение и каталог» в разделе «Ещё».'];
+  function whatsNewHTML() {
+    return '<h2>✨ Что нового в ' + VER + '</h2><div class="box"><ul class="news">' + NEWS.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+  }
+  function showNews() {
+    var el = document.createElement('div'); el.className = 'lb news-lb';
+    el.innerHTML = '<div class="nbox"><h2>✨ Что нового в ' + VER + '</h2><ul class="news">' + NEWS.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><button class="btn pri" data-act="newsok">Понятно, спасибо!</button></div>';
+    document.body.appendChild(el);
+  }
+  function viewStats() {
+    var st = S.st || (S.st = { per: 'today', data: null, err: '', pw: '' }), h = '<h2>📊 Статистика магазина</h2>';
+    if (!st.data) {
+      return h + '<div class="box"><p class="muted">Живые цифры из таблицы магазина. Для просмотра нужен пароль владельца.</p>' + (st.err ? '<div class="err">' + esc(st.err) + '</div>' : '') +
+        '<label>Пароль</label><input id="st_pw" type="password" autocomplete="current-password" value="' + esc(st.pw) + '"><button class="btn pri" data-act="stload" style="width:100%">📊 Показать статистику</button></div>';
+    }
+    var d = st.data.periods[st.per], names = st.data.names;
+    h += '<div class="chips">' + Object.keys(names).map(function (k) { return '<button class="chip' + (st.per === k ? ' on' : '') + '" data-act="stper" data-id="' + k + '">' + esc(names[k]) + '</button>'; }).join('') + '</div>';
+    h += '<div class="box stg"><div><b>' + d.visitors + '</b>👥 посетителей</div><div><b>' + d.views + '</b>👁 просмотров</div><div><b>' + d.wa + '</b>🟢 клики WhatsApp</div><div><b>' + d.orders + '</b>🧾 заказов</div></div>';
+    h += '<div class="box"><b>Сумма заказов: ' + money(d.sum) + ' ₸</b><br><span class="muted">❤️ В избранное добавлено: ' + d.favs + '</span></div>';
+    h += '<div class="box"><h3>🏆 ТОП-5 наборов</h3>' + (d.top.length ? d.top.map(function (t, i) { return '<div class="ci"><div class="t"><b>' + (i + 1) + '. ' + esc(t.title) + '</b>' + t.score + ' б. · кликов: ' + t.clicks + '</div></div>'; }).join('') : '<span class="muted">Пока нет данных.</span>') + '</div>';
+    return h + '<button class="btn" data-act="stload">🔄 Обновить цифры</button><button class="btn" data-act="stexit">🔒 Закрыть статистику</button>';
+  }
+  function loadStats() {
+    var st = S.st, pw = ($('#st_pw') && $('#st_pw').value) || st.pw; st.pw = pw;
+    if (!pw) { st.err = 'Введите пароль.'; return render(); }
+    api('stats', { master: pw }).then(function (r) { st.data = r; st.err = ''; render(); }, function (e) { st.err = errText(e); st.data = null; render(); });
+  }
+  function refreshApp() {
+    var go = function () { try { ['shop', 'gallery', 'cfg'].forEach(function (k) { localStorage.removeItem('shar:' + k); }); } catch (e) {} location.reload(); };
+    var jobs = [];
+    if (window.caches && caches.keys) jobs.push(caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }));
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }));
+    Promise.all(jobs).then(go, go);
   }
   function viewReviews() {
     var r = S.rev, h = '<h2>💬 Отзывы покупателей</h2>';
@@ -546,6 +590,12 @@
       case 'home': S.done = null; return tab('home');
       case 'more': S.sub = ''; return render();
       case 'sub': return openSub(id);
+      case 'refreshapp': t.textContent = 'Обновляем…'; return refreshApp();
+      case 'stload': return loadStats();
+      case 'stper': S.st.per = id; return render();
+      case 'stexit': S.st = null; return render();
+      case 'newsok': var nb = t.closest('.news-lb'); if (nb) nb.remove(); return;
+      case 'upd': if (S.waiting) { S.waiting.postMessage('SKIP_WAITING'); t.textContent = 'Обновляем…'; } else location.reload(); return;
       case 'retry': return loadShop().then(render);
       case 'theme': var d = document.documentElement, dark = d.getAttribute('data-theme') === 'dark' || (!d.getAttribute('data-theme') && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); d.setAttribute('data-theme', dark ? 'light' : 'dark'); ls('theme', dark ? 'light' : 'dark'); return;
       case 'cat': S.cat = id; S.sub2 = ''; S.q = ''; render(); return window.scrollTo(0, 0);
@@ -587,6 +637,25 @@
     if (!c) return;
     CFG.gateway = c['адресШлюза'] || CFG.gateway; CFG.booking = c['ссылкаЗаписи'] || CFG.booking; CFG.site = c['адресСайта'] || CFG.site; CFG.wa = normPhone(c['ватсапАдмина']) || CFG.wa; CFG.apk = c['apkUrl'] || CFG.apk;
   }
+  function showUpd(w) {
+    S.waiting = w; if ($('.upd')) return;
+    var b = document.createElement('button'); b.className = 'upd'; b.setAttribute('data-act', 'upd'); b.textContent = '🆕 Доступно обновление — Нажмите, чтобы обновить'; document.body.appendChild(b);
+  }
+  function watchSW() {
+    if (!('serviceWorker' in navigator) || location.protocol.indexOf('http') !== 0) return;
+    var reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (reloaded || !S.waiting) return; reloaded = true; location.reload(); });
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      if (reg.waiting && navigator.serviceWorker.controller) showUpd(reg.waiting);
+      reg.addEventListener('updatefound', function () {
+        var w = reg.installing; if (!w) return;
+        w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) showUpd(w); });
+      });
+      var chk = function () { try { reg.update().catch(function () {}); } catch (e) {} };
+      setInterval(chk, 30 * 60 * 1000);
+      document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') chk(); });
+    }).catch(function () {});
+  }
   function boot() {
     var th = ls('theme'); if (th) document.documentElement.setAttribute('data-theme', th);
     S.view = ls('view') === 'list' ? 'list' : 'reels'; S.hdr = ls('hdr') === 1;
@@ -605,7 +674,8 @@
       S.favs = S.favs.filter(prod); if (S.shop) { for (var k in S.cart) if (!prod(k)) delete S.cart[k]; }
       var ae = document.activeElement; if (!(ae && /INPUT|TEXTAREA/.test(ae.tagName))) render();
       if (S.sub === 'gallery') loadGallery();
-      if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) navigator.serviceWorker.register('sw.js').catch(function () {});
+      watchSW();
+      var seenV = ls('seenVer'); if (seenV !== VER) { ls('seenVer', VER); if (seenV) showNews(); }
     });
   }
   boot();
