@@ -1,5 +1,5 @@
-/* Миллион шаров v1.1.0 — кэш оболочки; запросы к облачному шлюзу НИКОГДА не кэшируются */
-const CACHE = 'millionsharov-v1.1.0';
+/* Миллион шаров v1.2.0 — кэш оболочки; запросы к облачному шлюзу НИКОГДА не кэшируются */
+const CACHE = 'millionsharov-v1.2.0';
 const SHELL = ['./', './index.html', './style.css', './app.js', './config.json', './manifest.json', './icons/apple-touch-icon.png', './icons/icon-maskable-512.png', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
