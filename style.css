@@ -1,4 +1,4 @@
-/* Миллион шаров v1.2.0 */
+/* Миллион шаров v1.2.1 */
 :root{--bg:#fff5f8;--card:#fff;--ink:#2b2233;--mut:#7a6d86;--pri:#e8408a;--pri2:#ff8a5c;--acc:#25a6d9;--line:#f0dbe6;--green:#1fa855;--gold:#f5b335;--red:#e5384f;--shadow:0 6px 20px rgba(232,64,138,.12)}
 :root[data-theme=dark]{--bg:#17121f;--card:#241c30;--ink:#f6eef8;--mut:#b3a5c2;--line:#3a2d4b;--shadow:0 6px 20px rgba(0,0,0,.4)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17121f;--card:#241c30;--ink:#f6eef8;--mut:#b3a5c2;--line:#3a2d4b;--shadow:0 6px 20px rgba(0,0,0,.4)}}
@@ -68,7 +68,7 @@ details{margin:6px 0;border:1px solid var(--line);border-radius:12px;padding:6px
 .lb img{max-width:100%;max-height:88vh}.lb .c{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#fff;font-size:14px}
 .lb .x,.lb .p,.lb .n{position:absolute;z-index:2;background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:50%;width:44px;height:44px;font-size:22px}.lb .x{top:calc(12px + env(safe-area-inset-top));right:12px}.lb .p{left:8px;top:50%}.lb .n{right:8px;top:50%}
 .foot{max-width:760px;margin:24px auto 0;padding:0 14px;text-align:center;color:var(--mut);font-size:12px}
-/* ===== v1.2.0 ===== */
+/* ===== v1.2.1 ===== */
 :root{--navh:calc(58px + env(safe-area-inset-bottom))}
 .hid{display:none!important}
 .nav{height:var(--navh);align-items:flex-start}
