@@ -1,4 +1,4 @@
-/* Миллион шаров v1.2.2 */
+/* Миллион шаров v1.2.4 */
 :root{--bg:#fff5f8;--card:#fff;--ink:#2b2233;--mut:#7a6d86;--pri:#e8408a;--pri2:#ff8a5c;--acc:#25a6d9;--line:#f0dbe6;--green:#1fa855;--gold:#f5b335;--red:#e5384f;--shadow:0 6px 20px rgba(232,64,138,.12)}
 :root[data-theme=dark]{--bg:#17121f;--card:#241c30;--ink:#f6eef8;--mut:#b3a5c2;--line:#3a2d4b;--shadow:0 6px 20px rgba(0,0,0,.4)}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#17121f;--card:#241c30;--ink:#f6eef8;--mut:#b3a5c2;--line:#3a2d4b;--shadow:0 6px 20px rgba(0,0,0,.4)}}

@@ -1,8 +1,8 @@
-/* Миллион шаров • Уральск — витрина-конструктор v1.2.2.
+/* Миллион шаров • Уральск — витрина-конструктор v1.2.4.
    Всё содержимое приходит из Google Таблицы через шлюз; в памяти телефона хранятся избранное, корзина, черновик заказа, тема и кэш каталога. */
 (function () {
   'use strict';
-  var VER = 'v1.2.2';
+  var VER = 'v1.2.4';
   var CFG = { gateway: '', booking: 'https://zko-onlayn-zapis.github.io/zapisi/', wa: '77774784418', site: '', apk: '' };
   var PROJECTS = [
     { icon: '📖', title: 'Картотека ЗКО', text: 'Главный справочник области', url: 'https://zko-spravochnik.github.io/cartoteka/' },
@@ -10,7 +10,7 @@
   ];
   var S = {
     shop: null, tab: 'home', sub: '', cat: '', sub2: '', view: 'reels', hdr: false, q: '', color: '', budget: 'all', favs: [], cart: {}, addons: {}, singles: {}, err: '', rev: null, revErr: '', gal: null, galErr: '',
-    form: { kind: 'pickup', gift: {} }, done: null, hl: ''
+    form: { kind: 'pickup', gift: {} }, done: null, hl: '', promo: null, promoText: ''
   };
   var PH = {}, PHP = {}, QUEUE = [], BUSY = 0, DEFERRED = null, TQ = [], TT = null, SEEN = {};
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -36,7 +36,7 @@
     need_address: 'Для доставки укажите адрес.', bad_date: 'Дата указана неверно.', bad_item: 'Одной из позиций уже нет в продаже. Обновите страницу и соберите корзину заново.',
     empty_cart: 'Корзина пуста.', bad_text: 'Напишите текст отзыва (не короче 3 знаков).', bad_rating: 'Поставьте оценку от 1 до 5 звёзд.',
     bad_photo: 'Фото не подошло (нужен JPEG, PNG или WebP).', photo_big: 'Фото слишком большое, выберите другое.', no_photo: 'Фото не найдено.', photo_unavailable: 'Фото сейчас недоступно.',
-    bad_master: 'Неверный пароль.', bad_gift_name: 'Укажите имя получателя подарка.', bad_gift_phone: 'Телефон получателя указан неверно.'
+    bad_master: 'Неверный пароль.', promo_bad: 'Такого промокода нет или он уже не действует.', promo_empty: 'Введите промокод.', bad_gift_name: 'Укажите имя получателя подарка.', bad_gift_phone: 'Телефон получателя указан неверно.'
   };
   function errText(e) { return ERR[e && e.code] || 'Что-то пошло не так. Попробуйте ещё раз или напишите в WhatsApp.'; }
   function api(action, data, keep) {
@@ -250,6 +250,11 @@
     var t = 0; cartLines().forEach(function (x) { t += x.p.price * x.q + adCost(x.p.id); });
     singleLines().forEach(function (x) { t += x.s.price * x.q; }); return t;
   }
+  function cartDisc() {   // скидка по применённому промокоду (окончательно её всё равно считает сервер при заказе)
+    var t = cartTotal(); if (!S.promo || t <= 0) return 0;
+    var d = S.promo.mode === 'pct' ? Math.round(t * S.promo.value / 100) : S.promo.value;
+    return Math.max(0, Math.min(d, t));
+  }
   function viewCart() {
     var L = cartLines(), SG = singleLines(), f = S.form, g = f.gift || {}, h = '';
     if (S.done) return '<div class="ok"><b>✅ Заказ ' + esc(S.done.id) + ' отправлен!</b><br>Мы свяжемся с вами по телефону, чтобы подтвердить детали. Сумма: ' + (S.done.total > 0 ? money(S.done.total) + ' ₸' : 'по запросу') + '</div><button class="btn pri" data-act="home">🎈 Вернуться к витрине</button>';
@@ -270,7 +275,9 @@
       h += '</div>';
     }
     var tot = cartTotal();
-    h += '<div class="box"><p style="font-size:18px;margin:0"><b>Итого: ' + (tot > 0 ? money(tot) + ' ₸' : 'по запросу') + '</b></p></div>';
+    var dsc = cartDisc();
+    h += '<div class="box"><h3>🎟 Промокод</h3>' + (S.promo ? '<div class="ok">Промокод <b>' + esc(S.promo.code) + '</b> применён: −' + (S.promo.mode === 'pct' ? S.promo.value + '%' : money(S.promo.value) + ' ₸') + ' <button class="btn" data-act="promox" style="padding:4px 10px">✕ Убрать</button></div>' : '<div class="row"><div><input id="f_promo" placeholder="Например, ВЕСНА10" value="' + esc(S.promoText || '') + '" autocapitalize="characters" autocomplete="off"></div><div style="flex:0 0 auto"><button class="btn" data-act="promo">Применить</button></div></div><div id="perr"></div>') + '</div>';
+    h += '<div class="box"><p style="font-size:18px;margin:0">' + (dsc ? '<small>Сумма: ' + money(tot) + ' ₸ · скидка −' + money(dsc) + ' ₸</small><br>' : '') + '<b>Итого: ' + (tot > 0 ? money(tot - dsc) + ' ₸' : 'по запросу') + '</b></p></div>';
     h += '<div class="box"><h3>Как получить заказ</h3><div class="seg"><button data-act="kind" data-id="delivery" class="' + (f.kind === 'delivery' ? 'on' : '') + '">🚚 Доставка</button><button data-act="kind" data-id="pickup" class="' + (f.kind === 'pickup' ? 'on' : '') + '">🏪 Самовывоз</button></div>';
     h += '<label>Ваше имя</label><input id="f_name" value="' + esc(f.name || '') + '" autocomplete="name"><label>Телефон</label><input id="f_phone" type="tel" placeholder="+7 777 123 45 67" value="' + esc(f.phone || '') + '" autocomplete="tel">';
     if (f.kind === 'delivery') h += '<label>Адрес доставки</label><input id="f_address" value="' + esc(f.address || '') + '"><div class="row"><div><label>Дата</label><input id="f_date" type="date" value="' + esc(f.date || '') + '"></div><div><label>Время</label><input id="f_time" type="time" value="' + esc(f.time || '') + '"></div></div>';
@@ -329,7 +336,8 @@
     }
     return viewMore();
   }
-  var NEWS = ['🎈 Высокие фото-плитки категорий и подкатегорий — каталог стал нагляднее.',
+  var NEWS = ['🎟 Промокоды: введите код в корзине — скидка посчитается сама.',
+    '🎈 Высокие фото-плитки категорий и подкатегорий — каталог стал нагляднее.',
     '🎞 Режим «по одному набору на весь экран»: листайте вверх-вниз, ракурсы — влево-вправо.',
     '🔍 Фото увеличивается щипком до 300%, можно двигать пальцем и дважды касаться.',
     '🔎 Умный поиск: по названию, составу, категории и сумме (введите «5000»).',
@@ -431,6 +439,7 @@
   function readForm() {
     var g = function (id) { var e = $('#' + id); return e ? e.value : undefined; }, f = S.form;
     ['name', 'phone', 'address', 'date', 'time', 'wish'].forEach(function (k) { var v = g('f_' + k); if (v !== undefined) f[k] = v; });
+    var pt = g('f_promo'); if (pt !== undefined) S.promoText = pt;
     f.gift = f.gift || {}; var gn = g('g_name'), gp = g('g_phone'); if (gn !== undefined) f.gift.name = gn; if (gp !== undefined) f.gift.phone = gp; if ($('#g_photo')) f.gift.photo = $('#g_photo').checked;
     ['name', 'phone', 'text'].forEach(function (k) { var v = g('r_' + k); if (v !== undefined) f['r' + k] = v; });
     saveDraft();
@@ -445,7 +454,8 @@
     });
     singleLines().forEach(function (x) { if (x.q > 0) t += '🎈 ' + x.s.title + ' × ' + x.q + ' = ' + money(x.s.price * x.q) + ' ₸\n'; });
     var tot = cartTotal();
-    t += '\nИтого: ' + (tot > 0 ? money(tot) + ' ₸' : 'по запросу') + '\n' + (f.kind === 'delivery' ? '🚚 Доставка: ' + (f.address || '') + (f.date ? '\n📅 ' + f.date + (f.time ? ' ' + f.time : '') : '') : '🏪 Самовывоз');
+    var dsc = cartDisc(); if (dsc) t += '\n🎟 Промокод ' + S.promo.code + ': −' + money(dsc) + ' ₸';
+    t += '\nИтого: ' + (tot > 0 ? money(tot - dsc) + ' ₸' : 'по запросу') + '\n' + (f.kind === 'delivery' ? '🚚 Доставка: ' + (f.address || '') + (f.date ? '\n📅 ' + f.date + (f.time ? ' ' + f.time : '') : '') : '🏪 Самовывоз');
     t += '\n👤 ' + (f.name || '') + ', 📞 ' + (f.phone || '');
     if (g.on) t += '\n🎁 Подарок для: ' + (g.name || '') + ', ' + (g.phone || '') + (g.photo ? '\n📸 Прошу прислать фотоотчёт вручения' : '');
     if (f.wish) t += '\n💬 ' + f.wish;
@@ -464,8 +474,8 @@
   }
   function sendSite(btn) {
     var f = S.form, g = f.gift || {}; btn.disabled = true; btn.textContent = 'Отправляем…';
-    api('order', { name: f.name, phone: f.phone, kind: f.kind, address: f.address || '', date: f.date || '', time: f.time || '', wish: f.wish || '', items: itemsPayload(), singles: singlesPayload(), gift: { on: !!g.on, name: g.name || '', phone: g.phone || '', photo: !!g.photo } }).then(function (r) {
-      S.done = { id: r.id, total: r.total }; S.cart = {}; S.singles = {}; S.addons = {}; S.form = { kind: f.kind, name: f.name, phone: f.phone, address: f.address, gift: {} }; save(); saveDraft(); render();
+    api('order', { name: f.name, phone: f.phone, kind: f.kind, address: f.address || '', date: f.date || '', time: f.time || '', wish: f.wish || '', items: itemsPayload(), singles: singlesPayload(), promo: S.promo ? S.promo.code : '', gift: { on: !!g.on, name: g.name || '', phone: g.phone || '', photo: !!g.photo } }).then(function (r) {
+      S.done = { id: r.id, total: r.total }; S.promo = null; S.promoText = ''; S.cart = {}; S.singles = {}; S.addons = {}; S.form = { kind: f.kind, name: f.name, phone: f.phone, address: f.address, gift: {} }; save(); saveDraft(); render();
     }, function (e) {
       btn.disabled = false; btn.textContent = '📨 Отправить заказ через сайт';
       var c = $('#cerr'); if (c) c.innerHTML = '<div class="err">' + esc(errText(e)) + ' Можно отправить заказ в WhatsApp — кнопка выше.</div>';
@@ -623,6 +633,12 @@
       case 'del': delete S.cart[id]; save(); return render();
       case 'sinc': S.singles[id] = Math.min(500, (S.singles[id] || 0) + 1); save(); return render();
       case 'sdec': if ((S.singles[id] || 0) > 1) S.singles[id]--; else delete S.singles[id]; save(); return render();
+      case 'promo':
+        var pc = (S.promoText || '').trim(), pe = $('#perr');
+        if (!pc) { if (pe) pe.innerHTML = '<div class="err">' + esc(ERR.promo_empty) + '</div>'; return; }
+        t.disabled = true; t.textContent = 'Проверяем…';
+        return api('promo', { code: pc }).then(function (r) { S.promo = { code: r.code, mode: r.mode, value: +r.value || 0 }; S.promoText = ''; render(); }, function (e) { t.disabled = false; t.textContent = 'Применить'; var pe2 = $('#perr'); if (pe2) pe2.innerHTML = '<div class="err">' + esc(errText(e)) + '</div>'; });
+      case 'promox': S.promo = null; return render();
       case 'kind': S.form.kind = id; saveDraft(); return render();
       case 'sendwa': if (!checkForm()) return; cartLines().forEach(function (x) { track('wa', x.p.id); }); window.open(waLink(cartMsg()), '_blank'); return;
       case 'sendsite': if (!checkForm()) return; return sendSite(t);
