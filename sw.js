@@ -1,7 +1,7 @@
-/* Миллион шаров v1.2.4 — кэш оболочки; запросы к облачному шлюзу НИКОГДА не кэшируются.
+/* Миллион шаров v2.0.0 — кэш оболочки; запросы к облачному шлюзу НИКОГДА не кэшируются.
    Новая версия сама докачивает свежие файлы в фоне и ждёт: страница показывает плашку «Доступно обновление». */
-const CACHE = 'shar-v1.2.4';
-const SHELL = ['./', './index.html', './style.css', './app.js', './config.json', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/icon-maskable-512.png'];
+const CACHE = 'shar-v2.0.0';
+const SHELL = ['./', './index.html', './style.css', './app.js', './admin.js', './config.json', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/icon-maskable-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => fetch(new Request(u, { cache: 'reload' })).then(r => r.ok ? c.put(u, r) : null).catch(() => null)))));
 });

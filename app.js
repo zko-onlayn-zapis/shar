@@ -1,8 +1,8 @@
-/* Миллион шаров • Уральск — витрина-конструктор v1.2.4.
+/* Миллион шаров • Уральск — витрина-конструктор v2.0.0.
    Всё содержимое приходит из Google Таблицы через шлюз; в памяти телефона хранятся избранное, корзина, черновик заказа, тема и кэш каталога. */
 (function () {
   'use strict';
-  var VER = 'v1.2.4';
+  var VER = 'v2.0.0';
   var CFG = { gateway: '', booking: 'https://zko-onlayn-zapis.github.io/zapisi/', wa: '77774784418', site: '', apk: '' };
   var PROJECTS = [
     { icon: '📖', title: 'Картотека ЗКО', text: 'Главный справочник области', url: 'https://zko-spravochnik.github.io/cartoteka/' },
@@ -38,12 +38,17 @@
     bad_photo: 'Фото не подошло (нужен JPEG, PNG или WebP).', photo_big: 'Фото слишком большое, выберите другое.', no_photo: 'Фото не найдено.', photo_unavailable: 'Фото сейчас недоступно.',
     bad_master: 'Неверный пароль.', promo_bad: 'Такого промокода нет или он уже не действует.', promo_empty: 'Введите промокод.', bad_gift_name: 'Укажите имя получателя подарка.', bad_gift_phone: 'Телефон получателя указан неверно.'
   };
+  Object.assign(ERR, {
+    adm_bad: 'Пароль не подошёл.', adm_locked: 'Вход временно заблокирован.', adm_auth: 'Сессия закончилась — войдите снова.', adm_nopw: 'Пароль хозяйки ещё не записан в шлюз (пульт автора → «ОБНОВИТЬ ОБЛАЧНЫЙ ШЛЮЗ»).',
+    not_empty: 'В плитке есть вложенные плитки или наборы — сначала перенесите или удалите их.', too_deep: 'Слишком много этажей.', too_short: 'Слишком коротко — минимум 2 знака.', no_stock: 'Позиция не найдена.', no_cat: 'Плитка не найдена.', no_product: 'Набор не найден.',
+    no_photo_chat: 'Бот ещё не знает, куда слать фото: откройте бота и отправьте /start.', photo_tg: 'Телеграм не принял фото.', bad_qty: 'Введите число.'
+  });
   function errText(e) { return ERR[e && e.code] || 'Что-то пошло не так. Попробуйте ещё раз или напишите в WhatsApp.'; }
   function api(action, data, keep) {
     if (!CFG.gateway) return Promise.reject({ code: 'no_gateway' });
     return fetch(CFG.gateway, { method: 'POST', keepalive: !!keep, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action: action }, data || {})) })
       .then(function (r) { return r.text(); }, function () { throw { code: 'network' }; })
-      .then(function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw { code: 'bad_reply' }; } if (!j || !j.ok) throw { code: (j && j.error) || 'server_error' }; return j; });
+      .then(function (t) { var j; try { j = JSON.parse(t); } catch (e) { throw { code: 'bad_reply' }; } if (!j || !j.ok) throw { code: (j && j.error) || 'server_error', wait: j && j.wait, left: j && j.left, kids: j && j.kids, sets: j && j.sets, detail: j && j.detail }; return j; });
   }
   /* ---------- тихая статистика ---------- */
   function track(k, p) { TQ.push(p ? { k: k, p: p } : { k: k }); clearTimeout(TT); TT = setTimeout(flush, 8000); }
@@ -58,14 +63,20 @@
   function loadPhoto(id) {
     if (PH[id]) return Promise.resolve(PH[id]);
     if (PHP[id]) return PHP[id];
-    PHP[id] = new Promise(function (res, rej) { QUEUE.push({ id: id, res: res, rej: rej }); pump(); });
+    PHP[id] = pcGet(id).then(function (d) {
+      if (d) { PH[id] = d; return d; }
+      return new Promise(function (res, rej) { QUEUE.push({ id: id, res: res, rej: rej }); pump(); });
+    });
     return PHP[id];
   }
+  /* фото хранятся в кэше браузера (Cache Storage) по file_id: повторно со шлюза не скачиваются */
+  function pcGet(id) { try { return caches.open('ph-v1').then(function (c) { return c.match('/__ph/' + encodeURIComponent(id)); }).then(function (r) { return r ? r.text() : null; }).catch(function () { return null; }); } catch (e) { return Promise.resolve(null); } }
+  function pcPut(id, d) { try { caches.open('ph-v1').then(function (c) { return c.put('/__ph/' + encodeURIComponent(id), new Response(d)); }).catch(function () {}); } catch (e) {} }
   function pump() {
     while (BUSY < 3 && QUEUE.length) {
       (function (j) {
         BUSY++;
-        api('photo', { id: j.id }).then(function (r) { PH[j.id] = r.data; j.res(r.data); }, function (e) { delete PHP[j.id]; j.rej(e); }).then(function () { BUSY--; pump(); });
+        api('photo', { id: j.id, t: S.admT || undefined }).then(function (r) { PH[j.id] = r.data; pcPut(j.id, r.data); j.res(r.data); }, function (e) { delete PHP[j.id]; j.rej(e); }).then(function () { BUSY--; pump(); });
       })(QUEUE.shift());
     }
   }
@@ -101,7 +112,8 @@
   function catById(id) { return cats().filter(function (c) { return c.id === id; })[0]; }
   function subsOf(id) { return cats().filter(function (c) { return c.parent === id; }); }
   function topCats() { return cats().filter(function (c) { return !c.parent; }); }
-  function countIn(id) { var ids = [id].concat(subsOf(id).map(function (c) { return c.id; })); return ((S.shop && S.shop.products) || []).filter(function (p) { return ids.indexOf(p.category) >= 0; }).length; }
+  function descIds(id, d) { var out = [id]; if ((d || 0) < 8) subsOf(id).forEach(function (c) { out = out.concat(descIds(c.id, (d || 0) + 1)); }); return out; }
+  function countIn(id) { var ids = descIds(id); return ((S.shop && S.shop.products) || []).filter(function (p) { return ids.indexOf(p.category) >= 0; }).length; }
   function filt(list) { return list.filter(function (p) { if (S.color && p.colors.map(function (c) { return c.toLowerCase(); }).indexOf(S.color) < 0) return false; return budgetOk(p); }); }
   function searchList() {
     var q = S.q.trim().toLowerCase(), d = q.replace(/[\s₸тг.]/g, ''), num = /^\d{3,7}$/.test(d) ? +d : 0;
@@ -203,8 +215,8 @@
   }
   function viewFloor() {
     var c = catById(S.cat); if (!c) { S.cat = ''; S.sub2 = ''; return viewHome(); }
-    var cur = S.sub2 ? (catById(S.sub2) || c) : c, subs = subsOf(c.id), h = floorBar(cur);
-    if (subs.length && !S.sub2) {
+    var cur = S.sub2 ? (catById(S.sub2) || c) : c, subs = subsOf(cur.id), h = floorBar(cur);
+    if (subs.length) {
       h += '<div class="tiles">' + subs.map(function (x) { return tileHTML(x, 'subcat'); }).join('') + '</div>';
       var own = floorProducts(); if (own.length) h += '<h2>Ещё в этой категории</h2>' + gridHTML(own);
       return h;
@@ -213,7 +225,7 @@
   }
   function reelsOn() {
     if (S.tab !== 'home' || !S.cat || S.view !== 'reels' || !S.shop) return false;
-    if (subsOf(S.cat).length && !S.sub2) return false;
+    if (subsOf(S.sub2 || S.cat).length) return false;
     return floorProducts().length > 0;
   }
   function slide(p) {
@@ -336,7 +348,8 @@
     }
     return viewMore();
   }
-  var NEWS = ['🎟 Промокоды: введите код в корзине — скидка посчитается сама.',
+  var NEWS = ['🛠 Версия 2.0: хозяйка правит витрину и склад прямо на сайте — без перезаливки файлов.',
+    '🎟 Промокоды: введите код в корзине — скидка посчитается сама.',
     '🎈 Высокие фото-плитки категорий и подкатегорий — каталог стал нагляднее.',
     '🎞 Режим «по одному набору на весь экран»: листайте вверх-вниз, ракурсы — влево-вправо.',
     '🔍 Фото увеличивается щипком до 300%, можно двигать пальцем и дважды касаться.',
@@ -610,7 +623,7 @@
       case 'theme': var d = document.documentElement, dark = d.getAttribute('data-theme') === 'dark' || (!d.getAttribute('data-theme') && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); d.setAttribute('data-theme', dark ? 'light' : 'dark'); ls('theme', dark ? 'light' : 'dark'); return;
       case 'cat': S.cat = id; S.sub2 = ''; S.q = ''; render(); return window.scrollTo(0, 0);
       case 'subcat': S.sub2 = id; render(); return window.scrollTo(0, 0);
-      case 'back': if (S.sub2) S.sub2 = ''; else S.cat = ''; render(); return window.scrollTo(0, 0);
+      case 'back': var bcu = S.sub2 && catById(S.sub2); if (bcu && bcu.parent && bcu.parent !== S.cat) S.sub2 = bcu.parent; else if (S.sub2) S.sub2 = ''; else S.cat = ''; render(); return window.scrollTo(0, 0);
       case 'mode': S.view = S.view === 'reels' ? 'list' : 'reels'; ls('view', S.view); render(); return window.scrollTo(0, 0);
       case 'hdr': S.hdr = !S.hdr; ls('hdr', S.hdr ? 1 : 0); return render();
       case 'clearq': S.q = ''; return render();
@@ -618,7 +631,7 @@
       case 'color': S.color = S.color === id ? '' : id; return render();
       case 'budget': S.budget = id; return render();
       case 'top': var tp = prod(id), tc = tp && catOf(tp); S.q = ''; S.color = ''; S.budget = 'all'; S.hl = id; seen(id);
-        if (tc) { S.cat = tc.parent || tc.id; S.sub2 = tc.parent ? tc.id : ''; } else { S.cat = ''; S.q = tp ? tp.title : ''; }
+        if (tc) { var rt = tc, g = 0; while (rt.parent && catById(rt.parent) && g++ < 9) rt = catById(rt.parent); S.cat = rt.id; S.sub2 = rt.id !== tc.id ? tc.id : ''; } else { S.cat = ''; S.q = tp ? tp.title : ''; }
         render(); var sc2 = $('#rscroll'), sl2 = sc2 && sc2.querySelector('[data-slide="' + id + '"]'); if (sl2) sc2.scrollTop = sl2.offsetTop; else { var c = document.querySelector('[data-card="' + id + '"]'); if (c) c.scrollIntoView({ block: 'center' }); }
         setTimeout(function () { S.hl = ''; var cc = document.querySelector('[data-card="' + id + '"]'); if (cc) cc.classList.remove('hl'); }, 2500); return;
       case 'wa': track('wa', id); return;
@@ -672,6 +685,23 @@
       document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') chk(); });
     }).catch(function () {});
   }
+  /* ---------- скрытый вход: удержание 1,7 сек на плашке версии во вкладке «Ещё»; видимой кнопки нет ---------- */
+  var LP = null, LPX = 0, LPY = 0;
+  function lpStop() { if (LP) { clearTimeout(LP); LP = null; } }
+  function openAdmin() {
+    if (window.SHARADM) return window.SHARADM.open();
+    var sc = document.createElement('script'); sc.src = 'admin.js?v=' + VER;
+    sc.onload = function () { if (window.SHARADM) window.SHARADM.open(); };
+    document.head.appendChild(sc);
+  }
+  document.addEventListener('pointerdown', function (e) {
+    if (!e.target.closest || !e.target.closest('.verbar')) return;
+    lpStop(); LPX = e.clientX; LPY = e.clientY; LP = setTimeout(function () { LP = null; openAdmin(); }, 1700);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { document.addEventListener(n, lpStop); });
+  document.addEventListener('pointermove', function (e) { if (LP && (Math.abs(e.clientX - LPX) > 12 || Math.abs(e.clientY - LPY) > 12)) lpStop(); });
+  document.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('.verbar')) e.preventDefault(); });
+  window.SHAR = { S: S, api: api, ls: ls, esc: esc, money: money, errText: errText, ERR: ERR, VER: VER, hydrate: hydrate, loadPhoto: loadPhoto, render: render, loadShop: loadShop, subsOf: subsOf };
   function boot() {
     var th = ls('theme'); if (th) document.documentElement.setAttribute('data-theme', th);
     S.view = ls('view') === 'list' ? 'list' : 'reels'; S.hdr = ls('hdr') === 1;
