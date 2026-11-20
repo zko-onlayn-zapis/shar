@@ -155,3 +155,48 @@ main{padding-bottom:12px}
 .adm-b{flex:0 0 52px;height:46px;border:0;border-radius:12px;background:var(--pri);color:#fff;font-weight:800;font-size:17px}.adm-b:first-of-type{background:#7a6d86}
 .adm-q{flex:0 0 54px;height:46px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);font-weight:800;font-size:18px}.adm-st.zero .adm-q{color:var(--red);border-color:var(--red)}
 .adm-toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translate(-50%,30px);z-index:99;max-width:92%;background:#2b2233;color:#fff;padding:11px 16px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:all .3s}.adm-toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ===== v2.0.1 ===== */
+/* iPhone: плитки с фиксированными пропорциями, фото всегда заполняет контейнер */
+.tile{min-height:200px;overflow:hidden}
+.tile .tp{position:relative;flex:none;height:72%;overflow:hidden}
+.tile .tp img{width:100%!important;height:100%!important;object-fit:cover;display:block}
+/* переключатель вида */
+.vsw{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}.vsw::-webkit-scrollbar{display:none}
+.grid.v-grid{grid-template-columns:1fr 1fr;gap:10px}
+.cg .ph{height:auto;aspect-ratio:1/1}.cg .cb{padding:8px 10px 10px}.cg h3{font-size:14px;line-height:1.2;margin:2px 0 4px;cursor:pointer}
+.cg .price{font-size:15px}.cg .row .btn{margin-top:6px;padding:10px 6px;font-size:14px}.cg .row .btn.ico{flex:0 0 44px;padding:10px 0}
+.grid.v-list{gap:10px}
+.cl{display:flex;align-items:stretch}.cl .ph{flex:0 0 38%;height:auto;min-height:130px;aspect-ratio:1/1}
+.cl .cb{flex:1;min-width:0;padding:10px}.cl h3{font-size:15px;margin:0 0 4px}.cl .row .btn{margin-top:8px;padding:10px 6px;font-size:14px}.cl .row .btn.ico{flex:0 0 46px}
+.ph img{display:block}
+.dsc{margin:8px 0 4px}.cmp{margin:6px 0}.cmp ul{margin:4px 0 4px 18px;padding:0}
+/* карточка набора поверх страницы */
+.det{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom))}
+.dbox{position:relative;max-width:560px;margin:0 auto}.dbox .card{box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.dbox .x{position:absolute;z-index:3;right:8px;top:8px;width:40px;height:40px;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:20px}
+.prz{border-color:var(--gold)}
+/* игра */
+.gw{position:fixed;right:12px;bottom:calc(var(--navh) + 14px);z-index:30;display:flex;align-items:center;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.gwb{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;font-weight:800;font-size:14px;padding:11px 16px;border-radius:24px;box-shadow:0 6px 18px rgba(232,64,138,.45);animation:gwp 2.2s ease-in-out infinite}
+.gwx{position:absolute;right:-6px;top:-8px;width:24px;height:24px;border-radius:50%;border:0;background:#2b2233;color:#fff;font-size:16px;line-height:22px;padding:0}
+@keyframes gwp{50%{transform:scale(1.06)}}
+.gtop{text-align:center;margin:6px 0}.gheart{display:inline-block;font-size:22px;font-weight:800;background:var(--card);border:2px solid var(--line);border-radius:20px;padding:4px 16px}
+.ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:360px;margin:12px auto}
+.gcell{aspect-ratio:1/1;padding:0;border:0;background:none;perspective:600px;-webkit-tap-highlight-color:transparent}.gcell:disabled{opacity:1}
+.gin{position:relative;display:block;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s}
+.gcell.flip .gin{transform:rotateY(180deg)}
+.gbk,.gfc{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+.gbk{background:linear-gradient(160deg,#ffd9ea,#d9ecff);border:2px solid var(--pri);box-shadow:var(--shadow);color:#8a1450}.gbk img{width:56%;height:auto;display:block}.gbk i{font-style:normal;font-size:9px;font-weight:800;line-height:1.1;text-align:center;margin-top:3px;padding:0 4px}
+.gfc{transform:rotateY(180deg);font-size:44px;background:#fff3a6;border:2px solid #e9c93a}.gcell.hit .gfc{background:linear-gradient(160deg,#ffe27a,#ff9fc4);border-color:var(--pri)}
+.gwin{background:var(--card);border:2px solid var(--gold);border-radius:18px;padding:14px;text-align:center;box-shadow:var(--shadow)}.gwin .gp{font-size:20px;font-weight:800;color:var(--pri);margin:8px 0}
+.fxc{position:fixed;inset:0;z-index:95;pointer-events:none}
+/* пароль с глазиком (сайт и админ-режим) */
+.pwrow{display:flex;align-items:center;gap:6px}.pwrow input{flex:1;min-width:0}
+.eye{flex:0 0 44px;height:44px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font-size:20px;padding:0;line-height:1}
+/* админ: сортировка плиток */
+.adm-tilebar{display:flex;gap:6px}.adm-tilebar .btn{margin-top:6px;padding:8px 4px;font-size:13px}
+.tile.dragging{opacity:.55;transform:scale(1.04);z-index:5}.tile.dropt{outline:3px dashed var(--pri)}
+.tiles.sorting,.tiles.sorting .tile{touch-action:none}
+.adm-tile{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.tile.dragging{pointer-events:none}
+.adm-tile{position:relative}
