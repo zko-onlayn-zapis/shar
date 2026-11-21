@@ -1,4 +1,4 @@
-/* Миллион шаров • Уральск — «Режим администратора» v2.0.1 (модуль admin.js).
+/* Миллион шаров • Уральск — «Режим администратора» v2.1.0 (модуль admin.js).
    Визуальный редактор витрины по этажам, наборы, фото в чат бота, черновик и публикация, «Книга учёта».
    Сессия 12 часов хранится в localStorage (переживает перезапуск iPhone-приложения). Пароль хозяйки здесь НЕ хранится: он проверяется только на сервере (шлюз). Вход открывается долгим удержанием на плашке версии. */
 (function () {
@@ -92,10 +92,10 @@
       '<div class="adm-note">' + (dirty ? '✏️ Есть неопубликованные правки (' + A.dirty + '). Посетители пока видят прежнюю версию.' : '✅ Всё опубликовано — посетители видят актуальную витрину.') + '</div>' +
       '<div class="adm-bar"><button class="btn pri' + (dirty ? '' : ' soft') + '" data-a="publish">✅ Опубликовать изменения</button>' +
       '<button class="btn" data-a="stock">📒 Книга учёта</button>' + (A.view !== 'floors' ? '<button class="btn" data-a="floors">🏠 К витрине</button>' : '') +
-      '<button class="btn" data-a="astats">📊 Статистика</button><button class="btn" data-a="agame">🎁 Настройка игры</button>' +
+      '<button class="btn" data-a="astats">📊 Статистика</button><button class="btn" data-a="agame">🎁 Настройка игры</button><button class="btn" data-a="anews" style="grid-column:1/-1">🛠️ Обновления админки</button>' +
       '<button class="btn" data-a="discard"' + (dirty ? '' : ' disabled') + '>↩️ Сбросить черновик</button><button class="btn" data-a="logout">🚪 Выйти</button><button class="btn danger" data-a="reset" style="grid-column:1/-1">🧹 Очистить тестовые наборы и фото</button></div>';
     drawBanner();
-    if (A.view === 'stock') drawStock(); else if (A.view === 'astats') drawAStats(); else if (A.view === 'agame') drawAGame(); else drawFloors();
+    if (A.view === 'stock') drawStock(); else if (A.view === 'astats') drawAStats(); else if (A.view === 'agame') drawAGame(); else if (A.view === 'anews') drawANews(); else drawFloors();
     H.hydrate();
   }
   function drawBanner() {
@@ -328,6 +328,23 @@
     box.addEventListener('click', function (e) { if (Date.now() - NOCLICK < 450) { e.stopPropagation(); e.preventDefault(); } }, true);
   }
 
+  /* ---------- «🛠️ Обновления админки» — техническое для хозяйки (посетителям не показывается) ---------- */
+  var ADM_NEWS = [
+    ['v2.1.0', ['🌐 Адрес сайта определяется сам по тому, где открыта страница: после переезда на новый логин GitHub ссылки на наборы (#nabor-…) и кнопка «Поделиться» подхватят новый адрес без правок.',
+      '⬆️ Кнопка «Наверх» в длинных списках; игра скрывает плавающую кнопку, пока открыта сама игра.',
+      '✨ «Что нового» для покупателей теперь короткое; всё техническое — здесь.']],
+    ['v2.0.1', ['🛡 Защита от дублей: кнопка «Сохранить» блокируется, повторный запрос шлюз отбрасывает.',
+      '📷 Фото уходят только в закрытый канал (без звука); в личные чаты админов — никогда. Нужна строка «Канал фото | -100…» в secrets.txt и бот-администратор канала.',
+      '🔐 Вход администратора держится 12 часов и переживает перезапуск приложения на iPhone; в полях пароля есть 👁️.',
+      '↕️ Порядок плиток: удержание ~0,5 сек и перетаскивание или «⬅️ Раньше» / «➡️ Позже».',
+      '📝 У набора «Описание» и отдельный «Состав» (по строкам).',
+      '📊 Админская статистика: сумма заказов, избранное, ТОП-5, установки приложения; «🔄 Начать новый период отсчёта» (история сохраняется). Ваши устройства в счёт не попадают.',
+      '🎁 «Настройка игры»: общий выключатель и список призов.',
+      '🧹 «Очистить тестовые наборы и фото»: с паролем хозяйки; склад и статистика не затрагиваются.']]
+  ];
+  function drawANews() {
+    $('.adm-main').innerHTML = '<h2>🛠️ Обновления админки</h2>' + ADM_NEWS.map(function (v) { return '<div class="box"><h3>' + esc(v[0]) + '</h3><ul class="news">' + v[1].map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>'; }).join('');
+  }
   /* ---------- админская статистика ---------- */
   function drawAStats() {
     $('.adm-main').innerHTML = '<h2>📊 Статистика для хозяйки</h2><div id="as-body"><p class="muted">⏳ Загружаю…</p></div>';
@@ -457,6 +474,7 @@
       case 'eye': var pi = $('#' + t.getAttribute('data-for')); if (pi) { var sh = pi.type === 'password'; pi.type = sh ? 'text' : 'password'; t.textContent = sh ? '🙈' : '👁️'; t.setAttribute('aria-label', sh ? 'Скрыть пароль' : 'Показать пароль'); } return;
       case 'astats': A.view = 'astats'; return draw();
       case 'agame': A.view = 'agame'; return draw();
+      case 'anews': A.view = 'anews'; return draw();
       case 'asper': A.stPer = t.getAttribute('data-p'); return stBody();
       case 'asreset': if (!confirm('Начать новый период отсчёта? Цифры станут нулевыми, а вся история в таблице сохранится.')) return; lock(t);
         call('adm_statsReset').then(function () { toast('🔄 Новый период начат'); drawAStats(); }).catch(function (x) { unlock(t); toast(msg(x)); }); return;

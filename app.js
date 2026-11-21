@@ -1,12 +1,13 @@
-/* Миллион шаров • Уральск — витрина-конструктор v2.0.1.
+/* Миллион шаров • Уральск — витрина-конструктор v2.1.0.
    Всё содержимое приходит из Google Таблицы через шлюз; в памяти телефона хранятся избранное, корзина, черновик заказа, тема и кэш каталога. */
 (function () {
   'use strict';
-  var VER = 'v2.0.1';
-  var CFG = { gateway: '', booking: 'https://zko-onlayn-zapis.github.io/zapisi/', wa: '77774784418', site: '', apk: '' };
+  var VER = 'v2.1.0';
+  var CFG = { gateway: '', booking: 'https://gints-zko.github.io/zko/', wa: '77774784418', apk: '' };
   var PROJECTS = [
     { icon: '📖', title: 'Картотека ЗКО', text: 'Главный справочник области', url: 'https://zko-spravochnik.github.io/cartoteka/' },
-    { icon: '✂️', title: 'ЗКО Онлайн-записи', text: 'Запись к мастерам и специалистам', url: 'https://zko-onlayn-zapis.github.io/zapisi/' }
+    { icon: '✂️', title: 'ЗКО Онлайн-записи', text: 'Запись к мастерам и специалистам', url: 'https://gints-zko.github.io/zko/' },
+    { icon: '🎈', title: 'Миллион шаров • Уральск', text: 'Шары, арки и фотозоны', url: 'https://gints-zko.github.io/shar/' }
   ];
   var S = {
     shop: null, tab: 'home', sub: '', cat: '', sub2: '', view: 'grid', hdr: false, q: '', color: '', budget: 'all', favs: [], cart: {}, addons: {}, singles: {}, err: '', rev: null, revErr: '', gal: null, galErr: '',
@@ -294,7 +295,7 @@
     return h;
   }
   /* ----- вкладка «Ещё» ----- */
-  var MORE = [['gallery', '📸', 'Наши оформления', 'Расчёт по фото'], ['delivery', '🚚', 'Доставка и оплата', ''], ['reviews', '💬', 'Отзывы покупателей', ''], ['faq', '❓', 'Частые вопросы', 'FAQ'], ['care', '💡', 'Памятка по уходу за шарами', ''], ['game', '🎁', 'Счастливые карточки', '3 попытки в день'], ['projects', '🌐', 'Другие проекты ГИНЦ ЗКО', ''], ['install', '📲', 'Установить приложение', ''], ['stats', '📊', 'Статистика магазина', 'по паролю'], ['whatsnew', '✨', 'Что нового (' + VER + ')', '']];
+  var MORE = [['gallery', '📸', 'Наши оформления', 'Расчёт по фото'], ['delivery', '🚚', 'Доставка и оплата', ''], ['reviews', '💬', 'Отзывы покупателей', ''], ['faq', '❓', 'Частые вопросы', 'FAQ'], ['care', '💡', 'Памятка по уходу за шарами', ''], ['game', '🎁', 'Счастливые карточки', '3 попытки в день'], ['projects', '🌐', 'Другие проекты ГИНЦ ЗКО', ''], ['install', '📲', 'Установить приложение', ''], ['stats', '📊', 'Статистика магазина', 'посещаемость и заказы'], ['whatsnew', '✨', 'Что нового (' + VER + ')', '']];
   function backBtn() { return '<button class="btn back" data-act="more">← Назад в «Ещё»</button>'; }
   function viewMore() {
     var bu = bookUrl();
@@ -308,7 +309,7 @@
     if (!S.gal) return h + (S.galErr ? '' : '<div class="empty">Загружаем фото…</div>');
     if (!S.gal.length) return h + '<div class="empty">Фото оформлений скоро появятся 🎈</div>';
     return h + '<div class="grid">' + S.gal.map(function (g) {
-      var t = 'Здравствуйте! Хочу так же' + (g.caption ? ': ' + g.caption : '') + '. Фото: ' + (CFG.site || location.origin + location.pathname) + '#g=' + g.id;
+      var t = 'Здравствуйте! Хочу так же' + (g.caption ? ': ' + g.caption : '') + '. Фото: ' + siteBase() + '#g=' + g.id;
       return '<div class="card' + (S.hl === g.id ? ' hl' : '') + '" data-gal="' + esc(g.id) + '"><div class="ph" data-act="gzoom" data-id="' + esc(g.id) + '" data-fid="' + esc(g.photo.t) + '"></div><div class="cb">' + (g.caption ? '<h3>' + esc(g.caption) + '</h3>' : '') +
         '<a class="btn wa" href="' + esc(waLink(t)) + '" target="_blank" rel="noopener">💬 Хочу так же — узнать цену в WhatsApp</a></div></div>';
     }).join('') + '</div>';
@@ -334,7 +335,7 @@
       case 'delivery': return backBtn() + '<h2>🚚 Доставка и оплата</h2><div class="box pre">' + esc(setting('delivery')) + '</div><a class="btn wa" href="' + esc(waLink('Здравствуйте! Хочу уточнить условия доставки.')) + '" target="_blank" rel="noopener">🟢 Спросить в WhatsApp</a>';
       case 'faq': return backBtn() + '<h2>❓ Частые вопросы</h2><div class="box pre tail">' + esc(setting('faq')) + '</div>';
       case 'care': return backBtn() + '<h2>💡 Памятка по уходу за шарами</h2><div class="box pre tail">' + esc(setting('care')) + '</div>';
-      case 'projects': return backBtn() + '<h2>🌐 Другие проекты ГИНЦ ЗКО</h2>' + PROJECTS.map(function (p) { return '<a class="box proj" href="' + esc(p.url) + '" target="_blank" rel="noopener"><b>' + p.icon + '</b><span><strong>' + esc(p.title) + '</strong><br>' + esc(p.text) + '</span><i>↗</i></a>'; }).join('');
+      case 'projects': return backBtn() + '<h2>🌐 Другие проекты ГИНЦ ЗКО</h2>' + PROJECTS.filter(function (p) { return p.url !== siteBase(); }).map(function (p) { return '<a class="box proj" href="' + esc(p.url) + '" target="_blank" rel="noopener"><b>' + p.icon + '</b><span><strong>' + esc(p.title) + '</strong><br>' + esc(p.text) + '</span><i>↗</i></a>'; }).join('');
       case 'install': return viewInstall();
       case 'stats': return backBtn() + viewStats();
       case 'game': return backBtn() + viewGame();
@@ -343,14 +344,12 @@
     }
     return viewMore();
   }
-  var NEWS = ['🛡 Защита от дублей: двойное нажатие больше не создаёт лишних наборов и заказов.',
-    '👁 Глазик в полях пароля — можно увидеть, что вы вводите.',
-    '▦ Три вида списка: сетка, список и крупные карточки (плюс «лента» на весь экран) — выбор запоминается.',
-    '📝 У набора теперь есть «Описание» и отдельный «Состав» списком.',
-    '🟢 Сообщение в WhatsApp стало полным: состав, добавки, приз, ссылка на набор и фото.',
-    '📊 «Статистика магазина» открыта всем: устройства, просмотры, клики и заказы за день, неделю, месяц.',
-    '🎁 Мини-игра «Счастливые карточки 3×3»: 3 попытки в день, призы и скидки на 24 часа.',
-    '📲 На iPhone исправлены обрезанные фото в плитках.'];
+  var NEWS = ['🎁 Мини-игра «Счастливые карточки»: 3 попытки в день, призы и скидки на 24 часа.',
+    '▦ Переключатель вида каталога: сетка, список, крупные карточки и лента — выбор запоминается.',
+    '📊 «Статистика магазина» открыта всем: посещаемость и заказы за день, неделю, месяц.',
+    '📝 У наборов есть описание и состав, а в сообщении WhatsApp — ссылка на набор и фото.',
+    '📲 Улучшенные фото: на iPhone больше нет обрезанных картинок в плитках.',
+    '⬆️ Кнопка «Наверх» в длинных списках.'];
   function whatsNewHTML() {
     return '<h2>✨ Что нового в ' + VER + '</h2><div class="box"><ul class="news">' + NEWS.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
   }
@@ -358,24 +357,6 @@
     var el = document.createElement('div'); el.className = 'lb news-lb';
     el.innerHTML = '<div class="nbox"><h2>✨ Что нового в ' + VER + '</h2><ul class="news">' + NEWS.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul><button class="btn pri" data-act="newsok">Понятно, спасибо!</button></div>';
     document.body.appendChild(el);
-  }
-  function viewStats() {
-    var st = S.st || (S.st = { per: 'today', data: null, err: '', pw: '' }), h = '<h2>📊 Статистика магазина</h2>';
-    if (!st.data) {
-      return h + '<div class="box"><p class="muted">Живые цифры из таблицы магазина. Для просмотра нужен пароль владельца.</p>' + (st.err ? '<div class="err">' + esc(st.err) + '</div>' : '') +
-        '<label>Пароль</label><input id="st_pw" type="password" autocomplete="current-password" value="' + esc(st.pw) + '"><button class="btn pri" data-act="stload" style="width:100%">📊 Показать статистику</button></div>';
-    }
-    var d = st.data.periods[st.per], names = st.data.names;
-    h += '<div class="chips">' + Object.keys(names).map(function (k) { return '<button class="chip' + (st.per === k ? ' on' : '') + '" data-act="stper" data-id="' + k + '">' + esc(names[k]) + '</button>'; }).join('') + '</div>';
-    h += '<div class="box stg"><div><b>' + d.visitors + '</b>👥 посетителей</div><div><b>' + d.views + '</b>👁 просмотров</div><div><b>' + d.wa + '</b>🟢 клики WhatsApp</div><div><b>' + d.orders + '</b>🧾 заказов</div></div>';
-    h += '<div class="box"><b>Сумма заказов: ' + money(d.sum) + ' ₸</b><br><span class="muted">❤️ В избранное добавлено: ' + d.favs + '</span></div>';
-    h += '<div class="box"><h3>🏆 ТОП-5 наборов</h3>' + (d.top.length ? d.top.map(function (t, i) { return '<div class="ci"><div class="t"><b>' + (i + 1) + '. ' + esc(t.title) + '</b>' + t.score + ' б. · кликов: ' + t.clicks + '</div></div>'; }).join('') : '<span class="muted">Пока нет данных.</span>') + '</div>';
-    return h + '<button class="btn" data-act="stload">🔄 Обновить цифры</button><button class="btn" data-act="stexit">🔒 Закрыть статистику</button>';
-  }
-  function loadStats() {
-    var st = S.st, pw = ($('#st_pw') && $('#st_pw').value) || st.pw; st.pw = pw;
-    if (!pw) { st.err = 'Введите пароль.'; return render(); }
-    api('stats', { master: pw }).then(function (r) { st.data = r; st.err = ''; render(); }, function (e) { st.err = errText(e); st.data = null; render(); });
   }
   function refreshApp() {
     var go = function () { try { ['shop', 'gallery', 'cfg'].forEach(function (k) { localStorage.removeItem('shar:' + k); }); } catch (e) {} location.reload(); };
@@ -488,7 +469,7 @@
     var l = (S.shop && S.shop.products) || [];
     return l.filter(function (p) { return p.id === k; })[0] || (/^\d+$/.test(k) ? l.filter(function (p) { return p.title === 'Набор №' + k; })[0] : null);
   }
-  function siteBase() { var b = CFG.site || (location.origin + location.pathname.replace(/[^\/]*$/, '')); return b.replace(/\/?$/, '/'); }
+  function siteBase() { return (window.location.origin + window.location.pathname).replace(/[^\/]*$/, '').replace(/\/?$/, '/'); }   // без вшитого логина и без index.html
   function setUrl(p) { return siteBase() + '#nabor-' + encodeURIComponent(setKey(p)); }
   function photoUrl(p) { var ph = p.photos[0]; return ph && CFG.gateway ? CFG.gateway + (CFG.gateway.indexOf('?') >= 0 ? '&' : '?') + 'a=foto&id=' + encodeURIComponent(ph.f || ph.t) : ''; }
   function tryDeep(fin) {
@@ -608,7 +589,7 @@
   }
   /* плавающая кнопка «Выиграй приз!»: перетаскивается пальцем, закрывается крестиком (до завтра) */
   function gameWidget() {
-    var el = $('#gw'), show = gameOn() && ls('gwx') !== localDay();
+    var el = $('#gw'), show = gameOn() && ls('gwx') !== localDay() && !(S.tab === 'more' && S.sub === 'game');
     if (!show) { if (el) el.remove(); return; }
     if (el) return;
     el = document.createElement('div'); el.id = 'gw'; el.className = 'gw';
@@ -631,6 +612,18 @@
     el.addEventListener('click', function (e) { if (e.target.getAttribute('data-gw') === 'x') { ls('gwx', localDay()); el.remove(); } });
   }
   setInterval(function () { var t = $('#gtm'); if (t && S.game.state && S.game.state.exp) t.textContent = leftText(S.game.state.exp - Date.now()); }, 30000);
+  /* ----- кнопка «⬆️ Наверх»: появляется при длинной прокрутке ----- */
+  function upInit() {
+    var b = document.createElement('button'); b.id = 'up'; b.className = 'upbtn'; b.type = 'button'; b.textContent = '⬆️'; b.setAttribute('aria-label', 'Наверх');
+    b.addEventListener('click', function () {
+      var rm = false; try { rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+      try { window.scrollTo({ top: 0, behavior: rm ? 'auto' : 'smooth' }); } catch (e2) { window.scrollTo(0, 0); }
+    });
+    document.body.appendChild(b);
+    var tk = false;
+    function chk() { tk = false; b.classList.toggle('show', (window.pageYOffset || document.documentElement.scrollTop || 0) > 900 && !reelsOn()); }
+    window.addEventListener('scroll', function () { if (!tk) { tk = true; requestAnimationFrame(chk); } }, { passive: true });
+  }
   /* ---------- форма корзины ---------- */
   function readForm() {
     var g = function (id) { var e = $('#' + id); return e ? e.value : undefined; }, f = S.form;
@@ -858,7 +851,7 @@
   /* ---------- запуск: сначала кэш (мгновенно), потом свежие данные ---------- */
   function applyConfig(c) {
     if (!c) return;
-    CFG.gateway = c['адресШлюза'] || CFG.gateway; CFG.booking = c['ссылкаЗаписи'] || CFG.booking; CFG.site = c['адресСайта'] || CFG.site; CFG.wa = normPhone(c['ватсапАдмина']) || CFG.wa; CFG.apk = c['apkUrl'] || CFG.apk;
+    CFG.gateway = c['адресШлюза'] || CFG.gateway; CFG.booking = c['ссылкаЗаписи'] || CFG.booking; CFG.wa = normPhone(c['ватсапАдмина']) || CFG.wa; CFG.apk = c['apkUrl'] || CFG.apk;
   }
   function showUpd(w) {
     S.waiting = w; if ($('.upd')) return;
@@ -897,6 +890,7 @@
   document.addEventListener('contextmenu', function (e) { if (e.target.closest && e.target.closest('.verbar')) e.preventDefault(); });
   window.SHAR = { S: S, api: api, ls: ls, esc: esc, money: money, errText: errText, ERR: ERR, VER: VER, hydrate: hydrate, loadPhoto: loadPhoto, render: render, loadShop: loadShop, subsOf: subsOf };
   function boot() {
+    upInit();
     var th = ls('theme'); if (th) document.documentElement.setAttribute('data-theme', th);
     var vv = ls('vmode'); S.view = ['grid', 'list', 'big', 'reels'].indexOf(vv) >= 0 ? vv : 'grid'; S.hdr = ls('hdr') === 1;
     var pz0 = ls('prize'); S.prize = pz0 && pz0.exp > Date.now() ? pz0 : null;
